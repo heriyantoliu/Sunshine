@@ -87,6 +87,8 @@ public class ForecastAdapter extends CursorAdapter{
 
         viewHolder.descriptionView.setText(description);
 
+        viewHolder.iconView.setContentDescription(description);
+
         boolean isMetric = Utility.isMetric(context);
 
         double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);

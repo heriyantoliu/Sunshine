@@ -161,6 +161,8 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
             String description = data.getString(COL_WEATHER_DESC);
             mDescriptionView.setText(description);
 
+            mIconView.setContentDescription(description);
+
             boolean isMetric = Utility.isMetric(getActivity());
 
             double high = data.getDouble(COL_WEATHER_MAX_TEMP);
