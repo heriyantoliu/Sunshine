@@ -2,6 +2,7 @@ package com.example.android.sunshine;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -10,7 +11,6 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,8 +20,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.android.sunshine.data.WeatherContract.WeatherEntry;
 import com.example.android.sunshine.data.WeatherContract.LocationEntry;
+import com.example.android.sunshine.data.WeatherContract.WeatherEntry;
 
 /**
  * Created by Heriyanto on 9/25/2016.
@@ -30,6 +30,7 @@ import com.example.android.sunshine.data.WeatherContract.LocationEntry;
 public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
+    static final String DETAIL_URI = "URI";
     private static final String FORECAST_SHARING_HASHTAG = "#Sunshine App";
     private ShareActionProvider mShareActionProvider;
     private String mForeCast;
@@ -71,6 +72,8 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
     private TextView mWindView;
     private TextView mPressureView;
 
+    private Uri mUri;
+
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
@@ -105,6 +108,11 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        Bundle arguments = getArguments();
+        if (arguments != null){
+            mUri = arguments.getParcelable(DetailFragment.DETAIL_URI);
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
@@ -190,20 +198,29 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.v(LOG_TAG, "In onCreateLoeader");
-        Intent intent = getActivity().getIntent();
-        if (intent == null || intent.getData() == null){
-            return null;
+
+        if (mUri != null) {
+
+            return new CursorLoader(
+                    getActivity(),
+                    mUri,
+                    DETAIL_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
         }
-        return new CursorLoader(
-                getActivity(),
-                intent.getData(),
-                DETAIL_COLUMNS,
-                null,
-                null,
-                null
-        );
+        return null;
+    }
 
+    void onLocationChanged( String newLocation){
 
+        Uri uri = mUri;
+        if (uri != null){
+            long date = WeatherEntry.getDateFromUri(uri);
+            Uri updateUri = WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
+            mUri = updateUri;
+            getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        }
     }
 }
