@@ -1,8 +1,10 @@
 package com.example.android.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -37,7 +39,7 @@ public class MainActivity extends AppCompatActivity
 
         ForecastFragment forecastFragment = ((ForecastFragment)getSupportFragmentManager()
             .findFragmentById(R.id.fragment_forecast));
-        forecastFragment.setmUseTodayLayout(!mTwoPane);
+        forecastFragment.setUseTodayLayout(!mTwoPane);
     }
 
     @Override
@@ -53,6 +55,11 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this,SettingActivity.class));
             return true;
         }
+
+        if (id == R.id.action_map){
+            openPreferenceLocationInMap();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -64,7 +71,7 @@ public class MainActivity extends AppCompatActivity
             ForecastFragment ff = (ForecastFragment)getSupportFragmentManager()
                     .findFragmentById(R.id.fragment_forecast);
             if ( null != ff){
-                ff.onLocationChanged();;
+                ff.onLocationChanged();
             }
 
             DetailFragment df = (DetailFragment) getSupportFragmentManager()
@@ -111,6 +118,26 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);
             startActivity(intent);
+        }
+    }
+
+    private void openPreferenceLocationInMap(){
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String location = sharedPrefs.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        Uri geolocation = Uri.parse("geo:0,0").buildUpon()
+                .appendQueryParameter("q", location)
+                .build();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geolocation);
+
+        if (intent.resolveActivity(this.getPackageManager()) != null){
+            startActivity(intent);
+        }else{
+            Log.d(LOG_TAG, "Couldn't call " + location + ", no receiving apps installed");
         }
     }
 }

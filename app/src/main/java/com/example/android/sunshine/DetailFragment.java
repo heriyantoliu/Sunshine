@@ -31,9 +31,12 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor>{
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
     static final String DETAIL_URI = "URI";
+
     private static final String FORECAST_SHARING_HASHTAG = "#Sunshine App";
+
     private ShareActionProvider mShareActionProvider;
     private String mForeCast;
+
     private static final int DETAIL_LOADER = 0;
 
     private static final String[] DETAIL_COLUMNS = {

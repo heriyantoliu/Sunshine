@@ -1,5 +1,8 @@
 package com.example.android.sunshine;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -21,6 +24,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.android.sunshine.data.WeatherContract;
+import com.example.android.sunshine.services.SunshineService;
 
 /**
  * Created by Heriyanto on 9/25/2016.
@@ -70,7 +74,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        updateWeather();
     }
 
 
@@ -85,12 +88,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         int id = item.getItemId();
         if (id == R.id.action_refresh){
             updateWeather();
-            return true;
-        }else if (id == R.id.action_setting){
-            startActivity(new Intent(getActivity(),SettingActivity.class));
-            return true;
-        }else if (id == R.id.action_map){
-            openPreferenceLocationInMap();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -166,38 +163,24 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mForecastAdapter.swapCursor(null);
     }
 
-    private void openPreferenceLocationInMap(){
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = sharedPrefs.getString(
-                getString(R.string.pref_location_key),
-                getString(R.string.pref_location_default));
-
-        Uri geolocation = Uri.parse("geo:0,0").buildUpon()
-                .appendQueryParameter("q", location)
-                .build();
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(geolocation);
-
-        if (intent.resolveActivity(getActivity().getPackageManager()) != null){
-            startActivity(intent);
-        }else{
-            Log.d(LOG_TAG, "Couldn't call " + location + ", no receiving apps installed");
-        }
-    }
-
     void onLocationChanged(){
         updateWeather();
         getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
     }
 
     private void updateWeather(){
-        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-        String location = Utility.getPreferredLocation(getActivity());
-        weatherTask.execute(location);
+        Intent alarmIntent = new Intent(getActivity(), SunshineService.AlarmReceiver.class);
+        alarmIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA,
+                Utility.getPreferredLocation(getActivity()));
+
+        PendingIntent pi = PendingIntent.getBroadcast(getActivity(), 0,
+                alarmIntent, PendingIntent.FLAG_ONE_SHOT);
+
+        AlarmManager am = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
+        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pi);
     }
 
-    public void setmUseTodayLayout(boolean useTodayLayout){
+    public void setUseTodayLayout(boolean useTodayLayout){
         mUseTodayLayout = useTodayLayout;
         if (mForecastAdapter != null){
             mForecastAdapter.setmUseTodayLayout(mUseTodayLayout);
